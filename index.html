@@ -350,9 +350,9 @@
 
     <div class="btn-group">
       <div class="btn-row">
-        <!-- Main Recommended Option: Native AVK-5 IBD (.bds) -->
+        <!-- Main Recommended Option: Native AVK-5 IBD (.idc / .bds) -->
         <button class="btn btn-primary" id="btnExportIbd" style="background-color: #2563EB; font-size: 15px; padding: 14px 24px;">
-          ⭐ 1. Завантажити файл ІБД (.bds) — ПРЯМИЙ ІМПОРТ В АВК-5
+          ⭐ 1. Завантажити файл ІБД (.idc) — ДЛЯ ДОГОВІРНОЇ ЦІНИ В АВК-5
         </button>
         <!-- Alternative Option 2: Rasch_290 .xls -->
         <button class="btn btn-secondary" id="btnExportRasch">
@@ -363,12 +363,12 @@
   </div>
 
   <div class="guide-box">
-    <h4>📋 Як імпортувати файл ІБД (.bds) в АВК-5:</h4>
+    <h4>📋 Як імпортувати файл ІБД (.idc) в АВК-5:</h4>
     <ol>
-      <li>Натисніть велику синю кнопку <b>«⭐ 1. Завантажити файл ІБД (.bds)»</b> і збережіть файл <code>PRICE.bds</code>.</li>
-      <li>В АВК-5 перейдіть у головне вікно — <b>«Список будов»</b>.</li>
-      <li>У верхньому меню виберіть: <b>«Уведення-виведення» ➔ «Уведення ІБД»</b> (або <i>«Уведення будови з ІБД»</i>) та виберіть цей <code>PRICE.bds</code>.</li>
-      <li>В АВК-5 з'явиться готова будова <b>«МАТЕРІАЛИ З ПРАЙСІВ»</b>, у якій <b>усі позиції вже створені</b> (з правильними назвами, одиницями, кількістю і ціною!).</li>
+      <li>Натисніть синю кнопку <b>«⭐ 1. Завантажити файл ІБД (.idc)»</b> і збережіть файл <code>PRICE.idc</code>.</li>
+      <li>В АВК-5 відкрийте екран <b>«Договірна ціна»</b> або <b>«Список будов»</b>.</li>
+      <li>У верхньому меню виберіть: <b>«Уведення - виведення» ➔ «Уведення Інформаційного Блоку Даних (*.idc)» (Shift+S)</b> та виберіть цей <code>PRICE.idc</code>.</li>
+      <li>В АВК-5 з'явиться готова будова <b>«МАТЕРІАЛИ З ПРАЙСІВ»</b>, у якій <b>усі позиції вже створені</b> (з назвами, одиницями, кількістю і ціною!).</li>
       <li><i>(За потреби скопіювати їх у свій кошторис):</i> відкрийте ваш робочий кошторис і натисніть меню <b>«Сервіс» ➔ «Копіювання позицій з локальних кошторисів інших будов (Shift+C)»</b>.</li>
     </ol>
   </div>
@@ -636,7 +636,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'PRICE.bds';
+    a.download = 'PRICE.idc';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
