@@ -350,13 +350,17 @@
 
     <div class="btn-group">
       <div class="btn-row">
-        <!-- Main button: Native XLS 97-2003 without headers for Shift+M -->
-        <button class="btn btn-primary" id="btnExportAvkXls">
-          📥 1. Завантажити для АВК-5 (.xls для Shift+M, без заголовків)
+        <!-- Main Option 1: Native TXT for Alt+F3 -->
+        <button class="btn btn-primary" id="btnExportAvkTxt">
+          📥 1. Вбудований імпорт АВК-5 (.txt для Alt+F3)
         </button>
-        <!-- Secondary button: Fixed file for Rasch_290 -->
-        <button class="btn btn-secondary" id="btnExportRasch">
-          📥 2. Завантажити під Rasch_290 (.xls, правильні стовпчики)
+        <!-- Option 2: Native XLS for Shift+M -->
+        <button class="btn btn-secondary" id="btnExportAvkXls">
+          📥 2. Вбудований імпорт АВК-5 (.xls для Shift+M)
+        </button>
+        <!-- Option 3: Fixed file for Rasch_290 -->
+        <button class="btn btn-accent" id="btnExportRasch" style="background-color: #475569;">
+          📥 3. Для програми Rasch_290 (.xls)
         </button>
       </div>
     </div>
@@ -365,14 +369,17 @@
   <div class="guide-box">
     <h4>📋 Як завантажити підготовлений файл в АВК-5:</h4>
     <ol>
-      <li><b>Спосіб 1 (Прямий імпорт через Shift+M в АВК):</b>
-        <br>Натисніть зелену кнопку <b>«1. Завантажити для АВК-5 (.xls для Shift+M)»</b>.
-        <br>В АВК-5 у Локальному кошторисі виберіть меню: <b>«Створення» ➔ «Внесення групи рядків із файлу у форматі XLS (Shift+M)»</b> та оберіть цей файл. 
-        <br><i>(У цьому файлі видалено рядок заголовків і збережено справжній формат XLS, тому помилки «Ознака файла: Шифр» більше не буде!)</i>
+      <li><b>Спосіб 1 (Рекомендований: вбудований імпорт .txt через Alt+F3):</b>
+        <br>Натисніть зелену кнопку <b>«1. Вбудований імпорт АВК-5 (.txt для Alt+F3)»</b>.
+        <br>В АВК-5 у вікні Локального кошторису натисніть <b>«Створення» ➔ «Внесення групи рядків із текстового файлу (Alt+F3)»</b> і виберіть збережений файл. <i>(Створено точно за форматом експорту вашої версії АВК з міткою <code>:Л*</code>)</i>.
       </li>
-      <li><b>Спосіб 2 (Через вашу програму Rasch_290):</b>
-        <br>Натисніть синю кнопку <b>«2. Завантажити під Rasch_290»</b>.
-        <br>Завантажений файл уже має точні назви колонок (<code>Количество</code>, <code>Наименование</code>, <code>Ед. измерения</code>, <code>Материалы</code>), тому <b>Rasch_290 тепер розпізнає та внесе кількість на 100% правильно</b>.
+      <li><b>Спосіб 2 (Вбудований імпорт .xls через Shift+M):</b>
+        <br>Натисніть синю кнопку <b>«2. Вбудований імпорт АВК-5 (.xls для Shift+M)»</b>.
+        <br>В АВК-5 виберіть <b>«Створення» ➔ «Внесення групи рядків із файлу у форматі XLS (Shift+M)»</b>.
+      </li>
+      <li><b>Спосіб 3 (Через зовнішню програму Rasch_290):</b>
+        <br>Натисніть сіру кнопку <b>«3. Для програми Rasch_290 (.xls)»</b>.
+        <br>У програмі Rasch_290 натисніть <b>«Утилиты» ➔ «ИБД..» ➔ «материалов из прайса (Ctrl+D)»</b>. Файл тепер у форматі <code>.xls</code> (який вона відразу бачить) і містить точну назву колонки <code>Количество</code>.
       </li>
     </ol>
   </div>
@@ -554,36 +561,86 @@
     previewCard.style.display = 'block';
   }
 
-  // 1. Export for AVK Shift+M: True .xls (BIFF8) WITHOUT header row!
+  function encodeCP1251(str) {
+    const bytes = new Uint8Array(str.length);
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      if (code < 128) {
+        bytes[i] = code;
+      } else if (code >= 0x0410 && code <= 0x044F) {
+        bytes[i] = code - 0x0410 + 0xC0;
+      } else if (code === 0x0406) { bytes[i] = 0xB2; } // І
+      else if (code === 0x0456) { bytes[i] = 0xB3; } // і
+      else if (code === 0x0407) { bytes[i] = 0xAF; } // Ї
+      else if (code === 0x0457) { bytes[i] = 0xBF; } // ї
+      else if (code === 0x0404) { bytes[i] = 0xAA; } // Є
+      else if (code === 0x0454) { bytes[i] = 0xBA; } // є
+      else if (code === 0x0490) { bytes[i] = 0xA5; } // Ґ
+      else if (code === 0x0491) { bytes[i] = 0xB4; } // ґ
+      else if (code === 0x2116) { bytes[i] = 0xB9; } // №
+      else if (code === 0x2019 || code === 0x02BC) { bytes[i] = 0x27; } // '
+      else { bytes[i] = 0x3F; } // ?
+    }
+    return bytes;
+  }
+
+  // 1. Export for AVK Alt+F3: Native .txt (CP1251)
+  document.getElementById('btnExportAvkTxt').addEventListener('click', () => {
+    if (!parsedItems.length) return;
+    const prefix = cipherPrefixInput.value.trim();
+
+    let txtContent = ':Л*\r\n:К`Локальний кошторис*\r\n';
+    parsedItems.forEach((item, idx) => {
+      const cipher = prefix ? `${prefix}${idx + 1}` : String(idx + 1);
+      const qtyStr = String(item.qty).replace('.', ',');
+      const priceStr = item.price > 0 ? String(item.price).replace('.', ',') : '';
+      txtContent += `:П\`${cipher}\`${qtyStr}\`\`${priceStr}\`\`\`\`*\r\n`;
+    });
+
+    const bytes = encodeCP1251(txtContent);
+    const blob = new Blob([bytes], { type: 'text/plain;charset=windows-1251' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'АВК_Матеріали_AltF3.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // 2. Export for AVK Shift+M: Native .xls (BIFF8) with :Л marker
   document.getElementById('btnExportAvkXls').addEventListener('click', () => {
     if (!parsedItems.length) return;
     const prefix = cipherPrefixInput.value.trim();
 
-    // Direct data rows, NO header row!
-    const data = [];
+    const data = [
+      [":Л"],
+      [":К", "Локальний кошторис"]
+    ];
+
     parsedItems.forEach((item, idx) => {
       const cipher = prefix ? `${prefix}${idx + 1}` : String(idx + 1);
       data.push([
+        ":П",
         cipher,
-        item.name,
-        item.unit,
         item.qty,
+        "",
         item.price,
-        0, // Mass in tons (mandatory for AVK)
-        item.sum
+        "",
+        "",
+        ""
       ]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = [{ wch: 14 }, { wch: 45 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 14 }];
+    ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 12 }, { wch: 6 }, { wch: 12 }, { wch: 6 }, { wch: 6 }, { wch: 6 }];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Матеріали");
-    
-    // Write genuine Excel 97-2003 .xls (biff8)
+    XLSX.utils.book_append_sheet(wb, ws, "Локальний кошторис");
     XLSX.writeFile(wb, "АВК_Матеріали_ShiftM.xls", { bookType: 'biff8' });
   });
 
-  // 2. Export for Rasch_290 with exact column titles it expects!
+  // 3. Export for Rasch_290 with exact Russian headers and BIFF8 .xls
   document.getElementById('btnExportRasch').addEventListener('click', () => {
     if (!parsedItems.length) return;
     const prefix = cipherPrefixInput.value.trim();

@@ -181,6 +181,21 @@ def read_file(filepath: str) -> List[Dict[str, Any]]:
     else:
         raise ValueError(f"Непідтримуваний формат файлу: {ext}. Використовуйте .xlsx або .csv")
 
+def export_to_avk_txt(items: List[Dict[str, Any]], output_path: str, cipher_prefix: str = "С1-ПР1-"):
+    """Exports to AVK-5 Alt+F3 native text import format (CP1251)."""
+    lines = [
+        ":Л*",
+        ":К`Локальний кошторис*"
+    ]
+    for idx, item in enumerate(items, 1):
+        cipher = f"{cipher_prefix}{idx}" if cipher_prefix else str(idx)
+        qty_str = str(item['qty']).replace('.', ',')
+        price_str = str(item['price']).replace('.', ',') if item['price'] > 0 else ""
+        lines.append(f":П`{cipher}`{qty_str}``{price_str}````*")
+        
+    with open(output_path, 'w', encoding='cp1251', errors='replace', newline='\r\n') as f:
+        f.write("\r\n".join(lines) + "\r\n")
+
 def export_to_avk_excel(items: List[Dict[str, Any]], output_path: str, cipher_prefix: str = "С1-ПР1-", include_headers: bool = False):
     import openpyxl
     wb = openpyxl.Workbook()
