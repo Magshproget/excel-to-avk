@@ -356,7 +356,7 @@
         </button>
         <!-- Secondary button: Fixed file for Rasch_290 -->
         <button class="btn btn-secondary" id="btnExportRasch">
-          📥 2. Завантажити під Rasch_290 (.xlsx, правильні стовпчики)
+          📥 2. Завантажити під Rasch_290 (.xls, правильні стовпчики)
         </button>
       </div>
     </div>
@@ -607,7 +607,7 @@
     ws['!cols'] = [{ wch: 14 }, { wch: 45 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Лист1");
-    XLSX.writeFile(wb, "Для_Rasch_290.xlsx");
+    XLSX.writeFile(wb, "Для_Rasch_290.xls", { bookType: 'biff8' });
   });
 </script>
 
