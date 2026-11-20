@@ -668,8 +668,7 @@
     parsedItems.forEach((item, idx) => {
       const cipher = `${prefix}${idx + 1}`;
       const qtyStr = String(item.qty).replace('.', ',');
-      const priceStr = item.price > 0 ? Number(item.price).toFixed(2).replace('.', ',') : '';
-      lines.push(`:П\`${cipher}\`${qtyStr}\`\`${priceStr}\`\`\`\`*`);
+      lines.push(`:П\`${cipher}\`${qtyStr}\`\`1\`\`\`\`*`);
     });
 
     const fullText = lines.join('\r\n') + '\r\n';
