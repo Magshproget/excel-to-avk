@@ -577,6 +577,10 @@
   }
 
   function encodeCP1251(str) {
+    str = str.replace(/[Øø]/g, 'd')
+             .replace(/[—–]/g, '-')
+             .replace(/[«»“”]/g, '"')
+             .replace(/[’‘]/g, "'");
     const bytes = new Uint8Array(str.length);
     for (let i = 0; i < str.length; i++) {
       const code = str.charCodeAt(i);
@@ -619,10 +623,23 @@
   document.getElementById('btnExportNdi').addEventListener('click', () => {
     if (!parsedItems.length) return;
     const prefix = cipherPrefixInput.value.trim() || 'С1-ПР31-';
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const today = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`;
+    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const dtStr = `${today}/${timeStr}`;
 
-    const lines = parsedItems.map((it, idx) => {
+    const lines = [
+      `АВК-5 ред. 3.11.0\`${today}*`,
+      '0`С1*',
+      '@0*'
+    ];
+
+    parsedItems.forEach((it, idx) => {
       const cipher = `${prefix}${idx + 1}`;
-      return `С1\t${cipher}\t${it.name}\t${it.unit}\t0.001\t12\t1`;
+      const cleanName = it.name.replace(/`/g, '');
+      const cleanUnit = it.unit.replace(/`/g, '');
+      lines.push(`5\`${cipher}\`1\`Л19.2\`${cleanName}\`${cleanUnit}\`\`\`\`\`${dtStr}*`);
     });
 
     const fullText = lines.join('\r\n') + '\r\n';
