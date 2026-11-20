@@ -356,7 +356,7 @@
         </button>
         <!-- Step 1: Register all items in NDI -->
         <button class="btn" id="btnExportNdi" style="background-color: #D97706; color: #fff; font-size: 15px; padding: 14px 20px; cursor: pointer; border: none; border-radius: 8px;">
-          📥 1. Для НДІ (.txt)
+          📥 1. Для НДІ (.nst)
         </button>
         <!-- Step 2: Native AVK-5 Alt+F3 (.txt) -->
         <button class="btn" id="btnExportAltF3" style="background-color: #10B981; color: #fff; font-size: 15px; padding: 14px 20px; cursor: pointer; border: none; border-radius: 8px;">
@@ -373,7 +373,7 @@
   <div class="guide-box">
     <h4>📋 Як внести матеріали в АВК-5 (простий 2-кроковий процес):</h4>
     <ol style="line-height: 1.7;">
-      <li><b>Крок 1 (Реєстрація):</b> Натисніть <b>«📥 1. Зареєструвати матеріали в НДІ (.txt)»</b> і збережіть файл <code>АВК_НДІ_Матеріали.txt</code>.<br>
+      <li><b>Крок 1 (Реєстрація):</b> Натисніть <b>«📥 1. Зареєструвати матеріали в НДІ (.txt)»</b> і збережіть файл <code>АВК_НДІ_Матеріали.nst</code>.<br>
       В АВК-5 у верхньому меню виберіть: <b>«Інші функції» ➔ «Уведення» ➔ «Уведення НДІ користувача з текстового файлу»</b> та вкажіть цей файл. Усі матеріали з точними назвами та одиницями виміру записуються в базу.</li>
       <li><b>Крок 2 (Кошторис):</b> Натисніть <b>«📥 2. Внести в кошторис (.txt через Alt+F3)»</b> і збережіть файл <code>АВК_Матеріали_AltF3.txt</code>.<br>
       В АВК-5 зайдіть усередину свого <b>«Локального кошторису»</b> і натисніть комбінацію клавіш <b>Alt+F3</b> (або через меню: «Внесення групи рядків із текстового файлу»).</li>
@@ -631,7 +631,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'АВК_НДІ_Матеріали.txt';
+    a.download = 'АВК_НДІ_Матеріали.nst';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
