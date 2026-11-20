@@ -314,7 +314,7 @@
 
     <div class="field-group" style="margin-top: 18px;">
       <label for="cipherPrefix">Префікс шифру матеріалу в АВК-5:</label>
-      <input type="text" id="cipherPrefix" value="С1-ПР1-">
+      <input type="text" id="cipherPrefix" value="С1-ПР31-">
       <span style="font-size: 12px; color: #64748B; margin-left: 8px;">(для складу №31 можна вказати С1-ПР31-, або залишити С1-ПР1-)</span>
     </div>
   </div>
@@ -349,27 +349,29 @@
     </div>
 
     <div class="btn-group">
-      <div class="btn-row">
-        <!-- Main Recommended Option: Native AVK-5 Alt+F3 (.txt) -->
-        <button class="btn btn-primary" id="btnExportAltF3" style="background-color: #10B981; font-size: 15px; padding: 14px 24px;">
-          ⭐ 1. Завантажити для АВК-5 (.txt через Alt+F3) — ГОТОВИЙ ІМПОРТ
+      <div class="btn-row" style="flex-wrap: wrap; gap: 12px;">
+        <!-- Step 1: Register new items in NDI -->
+        <button class="btn" id="btnExportNdi" style="background-color: #D97706; color: #fff; font-size: 15px; padding: 14px 22px; cursor: pointer;">
+          📥 1. Зареєструвати нові в НДІ (.txt) <span id="newCountBadge" style="background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 12px; margin-left: 6px; font-size: 12px; font-weight: bold;"></span>
         </button>
-        <!-- Alternative Option 2: Rasch_290 .xls -->
-        <button class="btn btn-secondary" id="btnExportRasch">
-          📥 2. Для програми Rasch_290 (.xls)
+        <!-- Step 2: Native AVK-5 Alt+F3 (.txt) -->
+        <button class="btn btn-primary" id="btnExportAltF3" style="background-color: #10B981; font-size: 15px; padding: 14px 22px; cursor: pointer;">
+          📥 2. Внести в кошторис (.txt через Alt+F3)
+        </button>
+        <!-- Alternative Option: Rasch_290 .xls -->
+        <button class="btn btn-secondary" id="btnExportRasch" style="padding: 14px 18px;">
+          Для Rasch_290 (.xls)
         </button>
       </div>
     </div>
   </div>
 
   <div class="guide-box">
-    <h4>📋 Як внести матеріали в АВК-5 (через Alt+F3):</h4>
-    <ol>
-      <li>Натисніть зелену кнопку <b>«⭐ 1. Завантажити для АВК-5 (.txt через Alt+F3)»</b> та збережіть файл <code>АВК_Матеріали_AltF3.txt</code>.</li>
-      <li>В АВК-5 відкрийте ваш об'єкт / договірну ціну і зайдіть усередину <b>«Локального кошторису»</b> (де список позицій/робіт).</li>
-      <li>Натисніть комбінацію клавіш <b>Alt+F3</b> (або правою кнопкою миші ➔ меню <b>«Внесення групи рядків із текстового файлу»</b>).</li>
-      <li>Виберіть завантажений файл <code>АВК_Матеріали_AltF3.txt</code>.</li>
-      <li><b>Готово!</b> Усі матеріали з точними обсягами та цінами миттєво додаються в кошторис без ручного введення.</li>
+    <h4>📋 Повний порядок внесення в АВК-5 без ручного введення:</h4>
+    <ol style="line-height: 1.6;">
+      <li><b>Крок 1 (якщо у файлі є нові матеріали):</b> Натисніть помаранчеву кнопку <b>«📥 1. Зареєструвати нові в НДІ (.txt)»</b>. В АВК-5 відкрийте меню: <b>«Інші функції» ➔ «Уведення» ➔ «Уведення НДІ користувача з текстового файлу»</b> і виберіть збережений файл. Усі нові позиції назавжди додадуться в базу НДІ зі своїми назвами та одиницями виміру. <i>(Якщо всі позиції вже є в базі, цей крок автоматично пропускається).</i></li>
+      <li><b>Крок 2:</b> Натисніть зелену кнопку <b>«📥 2. Внести в кошторис (.txt через Alt+F3)»</b>. В АВК-5 зайдіть усередину свого <b>«Локального кошторису»</b> та натисніть на клавіатурі <b>Alt+F3</b> (або правою кнопкою миші ➔ «Внесення групи рядків із текстового файлу»).</li>
+      <li><b>Готово!</b> Усі матеріали миттєво з'являються в кошторисі з точними назвами, кількостями та цінами без жодної підміни.</li>
     </ol>
   </div>
 </div>
@@ -545,7 +547,22 @@
       tableBody.appendChild(tr);
     }
 
-    countDisplay.textContent = parsedItems.length;
+    let newItemsCount = 0;
+    parsedItems.forEach(item => {
+      const k = item.name.toLowerCase().trim();
+      if (!NSI_MAP[k]) newItemsCount++;
+    });
+    const badge = document.getElementById('newCountBadge');
+    if (badge) {
+      if (newItemsCount > 0) {
+        badge.textContent = `+${newItemsCount} нових`;
+        badge.style.background = 'rgba(0,0,0,0.3)';
+      } else {
+        badge.textContent = `Всі в базі ✓`;
+        badge.style.background = '#059669';
+      }
+    }
+    countDisplay.textContent = `${parsedItems.length} (${parsedItems.length - newItemsCount} в НДІ, ${newItemsCount} нових)`;
     sumDisplay.textContent = totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
     previewCard.style.display = 'block';
   }
@@ -581,34 +598,61 @@
   });
   const NSI_LIST = NSI_DATA.map(item => item.c);
 
-  // 1. Export for AVK-5 Alt+F3
+  // 1. Export for NDI registration
+  document.getElementById('btnExportNdi').addEventListener('click', () => {
+    if (!parsedItems.length) return;
+    const prefix = cipherPrefixInput.value.trim() || 'С1-ПР31-';
+
+    const newItems = [];
+    let nextIdx = 1;
+    parsedItems.forEach((item, idx) => {
+      const k = item.name.toLowerCase().trim();
+      if (!NSI_MAP[k]) {
+        const cip = `${prefix}${nextIdx++}`;
+        newItems.push({
+          cipher: cip,
+          name: item.name,
+          unit: item.unit,
+          price: item.price
+        });
+      }
+    });
+
+    if (!newItems.length) {
+      alert('Усі матеріали з цієї таблиці вже зареєстровані в базі НДІ! Реєструвати заново нічого не потрібно.');
+      return;
+    }
+
+    const lines = newItems.map(it => `С1\t${it.cipher}\t${it.name}\t${it.unit}\t0.001\t12\t1`);
+    const fullText = lines.join('\r\n') + '\r\n';
+    const bytes = encodeCP1251(fullText);
+    const blob = new Blob([bytes], { type: 'text/plain;charset=windows-1251' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'АВК_НДІ_Нові_Матеріали.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // 2. Export for AVK-5 Alt+F3
   document.getElementById('btnExportAltF3').addEventListener('click', () => {
     if (!parsedItems.length) return;
     const prefix = cipherPrefixInput.value.trim() || 'С1-ПР1-';
 
-    const assigned = new Set();
+    let nextNewIdx = 1;
     const matched = [];
-    const unmatched = [];
 
     parsedItems.forEach((item, idx) => {
       const k = item.name.toLowerCase().trim();
-      if (NSI_MAP[k] && !assigned.has(NSI_MAP[k])) {
-        const cip = NSI_MAP[k];
-        assigned.add(cip);
-        matched.push({ ...item, cipher: cip, origIdx: idx });
-      } else {
-        unmatched.push({ ...item, origIdx: idx });
+      let cip = NSI_MAP[k];
+      if (!cip) {
+        cip = `${prefix}${nextNewIdx++}`;
       }
-    });
-
-    const avail = NSI_LIST.filter(c => !assigned.has(c));
-    unmatched.forEach(item => {
-      let cip = avail.length ? avail.shift() : `${prefix}${item.origIdx + 1}`;
-      assigned.add(cip);
       matched.push({ ...item, cipher: cip });
     });
-
-    matched.sort((a, b) => a.origIdx - b.origIdx);
 
     const lines = [
       ':Л*',
