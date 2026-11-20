@@ -79,7 +79,6 @@ def parse_rows(rows: List[List[Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, i
     header_indices = {}
     header_row_idx = -1
     
-    # 1. Look for header row
     for r_idx, row in enumerate(rows):
         if not row:
             continue
@@ -92,7 +91,6 @@ def parse_rows(rows: List[List[Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, i
                 break
                 
     if header_row_idx == -1:
-        # Fallback heuristic: check row with most non-empty string headers
         for r_idx in range(min(15, len(rows))):
             cols = detect_columns([str(c) if c is not None else "" for c in rows[r_idx]])
             if 'name' in cols:
@@ -118,7 +116,6 @@ def parse_rows(rows: List[List[Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, i
             continue
         if name.lower() in ignore_words or any(name.lower().startswith(w) for w in ignore_words):
             continue
-        # Skip rows that are purely numeric or summary markers
         if name.replace(' ', '').replace('.', '').replace(',', '').isdigit():
             continue
             
@@ -166,7 +163,6 @@ def read_file(filepath: str) -> List[Dict[str, Any]]:
         return items
         
     elif ext in ['.csv', '.txt']:
-        # Try UTF-8 then CP1251
         content = None
         for enc in ['utf-8-sig', 'utf-8', 'cp1251']:
             try:
@@ -185,36 +181,15 @@ def read_file(filepath: str) -> List[Dict[str, Any]]:
     else:
         raise ValueError(f"Непідтримуваний формат файлу: {ext}. Використовуйте .xlsx або .csv")
 
-def export_to_avk_excel(items: List[Dict[str, Any]], output_path: str, cipher_prefix: str = "С1-ПР1-"):
+def export_to_avk_excel(items: List[Dict[str, Any]], output_path: str, cipher_prefix: str = "С1-ПР1-", include_headers: bool = False):
     import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-    
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "АВК_Матеріали"
+    ws.title = "Матеріали"
     
-    # AVK standard columns for Local Estimate import:
-    headers = [
-        "Шифр",
-        "Найменування",
-        "Одиниця виміру",
-        "Кількість",
-        "Ціна, грн",
-        "Маса, т",
-        "Сума, грн"
-    ]
-    
-    ws.append(headers)
-    
-    # Styling headers
-    header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
-    
-    for col_idx in range(1, len(headers) + 1):
-        cell = ws.cell(row=1, column=col_idx)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = Alignment(horizontal="center", vertical="center")
+    if include_headers:
+        headers = ["Шифр", "Найменування", "Одиниця виміру", "Кількість", "Ціна, грн", "Маса, т", "Сума, грн"]
+        ws.append(headers)
         
     for idx, item in enumerate(items, 1):
         cipher = f"{cipher_prefix}{idx}" if cipher_prefix else str(idx)
@@ -228,49 +203,34 @@ def export_to_avk_excel(items: List[Dict[str, Any]], output_path: str, cipher_pr
             item['sum']
         ])
         
-    # Auto-fit column widths
-    for col in ws.columns:
-        max_len = 0
-        col_letter = col[0].column_letter
-        for cell in col:
-            val_str = str(cell.value or "")
-            if len(val_str) > max_len:
-                max_len = len(val_str)
-        ws.column_dimensions[col_letter].width = min(max(max_len + 3, 10), 60)
-        
     wb.save(output_path)
 
-def export_to_avk_csv(items: List[Dict[str, Any]], output_path: str, cipher_prefix: str = "С1-ПР1-"):
-    headers = [
-        "Шифр",
-        "Найменування",
-        "Одиниця виміру",
-        "Кількість",
-        "Ціна",
-        "Маса",
-        "Сума"
-    ]
-    with open(output_path, 'w', encoding='cp1251', newline='', errors='replace') as f:
-        writer = csv.writer(f, delimiter=';')
-        writer.writerow(headers)
-        for idx, item in enumerate(items, 1):
-            cipher = f"{cipher_prefix}{idx}" if cipher_prefix else str(idx)
-            writer.writerow([
-                cipher,
-                item['name'],
-                item['unit'],
-                str(item['qty']).replace('.', ','),
-                str(item['price']).replace('.', ','),
-                '0,000',
-                str(item['sum']).replace('.', ',')
-            ])
+def export_for_rasch(items: List[Dict[str, Any]], output_path: str, cipher_prefix: str = "С1-ПР1-"):
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Лист1"
+    
+    # Exact Russian headers Rasch_290 expects
+    ws.append(["Шифр", "Наименование", "Ед. измерения", "Количество", "Материалы"])
+    
+    for idx, item in enumerate(items, 1):
+        cipher = f"{cipher_prefix}{idx}" if cipher_prefix else str(idx)
+        ws.append([
+            cipher,
+            item['name'],
+            item['unit'],
+            item['qty'],
+            item['price']
+        ])
+        
+    wb.save(output_path)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         inp = sys.argv[1]
-        out_xlsx = sys.argv[2] if len(sys.argv) > 2 else "avk_output.xlsx"
-        print(f"Reading {inp}...")
-        parsed = read_file(inp)
-        print(f"Found {len(parsed)} items.")
-        export_to_avk_excel(parsed, out_xlsx)
-        print(f"Saved to {out_xlsx} successfully!")
+        out_file = sys.argv[2] if len(sys.argv) > 2 else "АВК_Матеріали_ShiftM.xlsx"
+        items = read_file(inp)
+        print(f"Зчитано {len(items)} позицій.")
+        export_to_avk_excel(items, out_file, include_headers=False)
+        print(f"Збережено без заголовків у {out_file}!")

@@ -17,6 +17,8 @@
       --primary-hover: #16365C;
       --success: #2E7D32;
       --success-hover: #1B5E20;
+      --accent: #E65100;
+      --accent-hover: #BF360C;
       --bg: #F4F7FB;
       --card-bg: #FFFFFF;
       --border: #D1D9E6;
@@ -207,16 +209,25 @@
     /* Action buttons */
     .btn-group {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 12px;
       margin-top: 20px;
+    }
+
+    @media (min-width: 640px) {
+      .btn-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
     }
 
     button.btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      padding: 11px 22px;
+      padding: 13px 22px;
       border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
@@ -243,6 +254,15 @@
       background-color: var(--primary-hover);
     }
 
+    .btn-accent {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .btn-accent:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+    }
+
     button:disabled {
       background-color: #CBD5E1 !important;
       color: #64748B !important;
@@ -254,14 +274,14 @@
       background: #F8FAFC;
       border-left: 4px solid var(--primary);
       border-radius: 0 8px 8px 0;
-      padding: 16px 20px;
+      padding: 18px 20px;
       margin-top: 24px;
     }
 
     .guide-box h4 {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       color: var(--primary);
     }
 
@@ -272,7 +292,7 @@
     }
 
     .guide-box li {
-      margin-bottom: 5px;
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -281,27 +301,28 @@
 <div class="container">
   <div class="header">
     <h1>Конвертер матеріалів в АВК-5</h1>
-    <p>Автоматичне перетворення складських відомостей та інвентаризацій з Excel у формат кошторису АВК-5</p>
+    <p>Автоматична підготовка складських відомостей з Excel для імпорту в АВК-5 без ручного введення</p>
   </div>
 
   <div class="card">
     <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
       <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
       <h3>Натисніть сюди або перетягніть файл Excel (.xlsx, .xls) чи CSV</h3>
-      <p id="filenameDisplay">Підтримуються складські відомості з українськими та російськими заголовками</p>
+      <p id="filenameDisplay">Програма автоматично знайде назви, кількості, одиниці виміру та ціни</p>
     </div>
     <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls, .csv">
 
     <div class="field-group" style="margin-top: 18px;">
-      <label for="cipherPrefix">Префікс шифру матеріалу (для кошторису):</label>
+      <label for="cipherPrefix">Префікс шифру матеріалу в АВК-5:</label>
       <input type="text" id="cipherPrefix" value="С1-ПР1-">
+      <span style="font-size: 12px; color: #64748B; margin-left: 8px;">(для складу №31 можна вказати С1-ПР31-, або залишити С1-ПР1-)</span>
     </div>
   </div>
 
   <div class="card" id="previewCard" style="display: none;">
     <div class="grid-row">
       <div class="stat-card">
-        <div class="stat-label">Знайдено товарів / матеріалів</div>
+        <div class="stat-label">Розпізнано товарів / матеріалів</div>
         <div class="stat-value" id="countDisplay">0</div>
       </div>
       <div class="stat-card">
@@ -328,21 +349,31 @@
     </div>
 
     <div class="btn-group">
-      <button class="btn btn-primary" id="btnExportAvk">
-        📥 Завантажити для АВК-5 (.xlsx)
-      </button>
-      <button class="btn btn-secondary" id="btnExportRasch">
-        📥 Завантажити під Rasch_290 (.xlsx)
-      </button>
+      <div class="btn-row">
+        <!-- Main button: Native XLS 97-2003 without headers for Shift+M -->
+        <button class="btn btn-primary" id="btnExportAvkXls">
+          📥 1. Завантажити для АВК-5 (.xls для Shift+M, без заголовків)
+        </button>
+        <!-- Secondary button: Fixed file for Rasch_290 -->
+        <button class="btn btn-secondary" id="btnExportRasch">
+          📥 2. Завантажити під Rasch_290 (.xlsx, правильні стовпчики)
+        </button>
+      </div>
     </div>
   </div>
 
   <div class="guide-box">
-    <h4>📋 Як завантажити підготовлений файл в АВК-5 за 3 кроки:</h4>
+    <h4>📋 Як завантажити підготовлений файл в АВК-5:</h4>
     <ol>
-      <li>Відкрийте <b>АВК-5</b> ➔ перейдіть у потрібну будову ➔ відкрийте <b>«Локальний кошторис»</b>.</li>
-      <li>Натисніть правою кнопкою миші (або меню Сервіс) ➔ виберіть <b>«Введення інформації з файлів Excel»</b>.</li>
-      <li>Оберіть завантажений файл <code>АВК_Матеріали.xlsx</code> ➔ підтвердіть імпорт. Всі позиції завантажаться за кілька секунд!</li>
+      <li><b>Спосіб 1 (Прямий імпорт через Shift+M в АВК):</b>
+        <br>Натисніть зелену кнопку <b>«1. Завантажити для АВК-5 (.xls для Shift+M)»</b>.
+        <br>В АВК-5 у Локальному кошторисі виберіть меню: <b>«Створення» ➔ «Внесення групи рядків із файлу у форматі XLS (Shift+M)»</b> та оберіть цей файл. 
+        <br><i>(У цьому файлі видалено рядок заголовків і збережено справжній формат XLS, тому помилки «Ознака файла: Шифр» більше не буде!)</i>
+      </li>
+      <li><b>Спосіб 2 (Через вашу програму Rasch_290):</b>
+        <br>Натисніть синю кнопку <b>«2. Завантажити під Rasch_290»</b>.
+        <br>Завантажений файл уже має точні назви колонок (<code>Количество</code>, <code>Наименование</code>, <code>Ед. измерения</code>, <code>Материалы</code>), тому <b>Rasch_290 тепер розпізнає та внесе кількість на 100% правильно</b>.
+      </li>
     </ol>
   </div>
 </div>
@@ -359,7 +390,6 @@
   const tableBody = document.getElementById('tableBody');
   const cipherPrefixInput = document.getElementById('cipherPrefix');
 
-  // Drag and drop events
   ['dragenter', 'dragover'].forEach(name => {
     dropzone.addEventListener(name, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
   });
@@ -368,15 +398,11 @@
   });
 
   dropzone.addEventListener('drop', (e) => {
-    if (e.dataTransfer.files.length) {
-      handleFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
   });
 
   fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length) {
-      handleFile(e.target.files[0]);
-    }
+    if (e.target.files.length) handleFile(e.target.files[0]);
   });
 
   cipherPrefixInput.addEventListener('input', () => {
@@ -429,7 +455,7 @@
     let headerIndices = {};
     let headerRowIdx = -1;
 
-    for (let i = 0; i < Math.min(20, rows.length); i++) {
+    for (let i = 0; i < Math.min(25, rows.length); i++) {
       let r = rows[i] || [];
       let str = r.map(c => String(c || '').toLowerCase()).join(' ');
       if ((str.includes('товар') || str.includes('найменування') || str.includes('назва') || str.includes('матеріал')) &&
@@ -472,7 +498,7 @@
       if (!rawName) continue;
       let lower = rawName.toLowerCase();
       if (ignoreWords.some(w => lower.startsWith(w))) continue;
-      if (/^[\d\s.,]+$/.test(rawName)) continue; // skip total numbers
+      if (/^[\d\s.,]+$/.test(rawName)) continue;
 
       let qty = headerIndices.qty !== undefined ? cleanNumber(r[headerIndices.qty]) : 0;
       let unit = headerIndices.unit !== undefined ? normalizeUnit(r[headerIndices.unit]) : 'шт';
@@ -490,7 +516,7 @@
       }
     }
 
-    filenameDisplay.textContent = `${filename} (успішно оброблено)`;
+    filenameDisplay.textContent = `${filename} (успішно розпізнано)`;
     renderTable();
   }
 
@@ -503,7 +529,6 @@
       const cipher = prefix ? `${prefix}${idx + 1}` : String(idx + 1);
       totalSum += item.sum;
 
-      // Show first 50 rows in UI for responsiveness
       if (idx < 50) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -520,7 +545,7 @@
 
     if (parsedItems.length > 50) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="6" class="text-center" style="color: #64748B; font-style: italic; padding: 12px;">... та ще ${parsedItems.length - 50} позицій (усі будуть у збереженому файлі) ...</td>`;
+      tr.innerHTML = `<td colspan="6" class="text-center" style="color: #64748B; font-style: italic; padding: 12px;">... та ще ${parsedItems.length - 50} позицій (усі будуть у файлі) ...</td>`;
       tableBody.appendChild(tr);
     }
 
@@ -529,15 +554,13 @@
     previewCard.style.display = 'block';
   }
 
-  // Export functions
-  document.getElementById('btnExportAvk').addEventListener('click', () => {
+  // 1. Export for AVK Shift+M: True .xls (BIFF8) WITHOUT header row!
+  document.getElementById('btnExportAvkXls').addEventListener('click', () => {
     if (!parsedItems.length) return;
     const prefix = cipherPrefixInput.value.trim();
 
-    const data = [
-      ["Шифр", "Найменування", "Одиниця виміру", "Кількість", "Ціна, грн", "Маса, т", "Сума, грн"]
-    ];
-
+    // Direct data rows, NO header row!
+    const data = [];
     parsedItems.forEach((item, idx) => {
       const cipher = prefix ? `${prefix}${idx + 1}` : String(idx + 1);
       data.push([
@@ -546,18 +569,21 @@
         item.unit,
         item.qty,
         item.price,
-        0, // Mass mandatory for AVK
+        0, // Mass in tons (mandatory for AVK)
         item.sum
       ]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = [{ wch: 14 }, { wch: 45 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 14 }];
+    ws['!cols'] = [{ wch: 14 }, { wch: 45 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 14 }];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "АВК_Матеріали");
-    XLSX.writeFile(wb, "АВК_Матеріали.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Матеріали");
+    
+    // Write genuine Excel 97-2003 .xls (biff8)
+    XLSX.writeFile(wb, "АВК_Матеріали_ShiftM.xls", { bookType: 'biff8' });
   });
 
+  // 2. Export for Rasch_290 with exact column titles it expects!
   document.getElementById('btnExportRasch').addEventListener('click', () => {
     if (!parsedItems.length) return;
     const prefix = cipherPrefixInput.value.trim();
