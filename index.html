@@ -350,13 +350,17 @@
 
     <div class="btn-group">
       <div class="btn-row" style="flex-wrap: wrap; gap: 12px;">
+        <!-- Big One-Click Download Both -->
+        <button class="btn btn-primary" id="btnExportBoth" style="background-color: #2563EB; font-size: 15px; padding: 14px 22px; cursor: pointer; border: none; border-radius: 8px;">
+          📦 Завантажити обидва файли одразу (1 і 2)
+        </button>
         <!-- Step 1: Register all items in NDI -->
-        <button class="btn" id="btnExportNdi" style="background-color: #D97706; color: #fff; font-size: 15px; padding: 14px 22px; cursor: pointer; border: none; border-radius: 8px;">
-          📥 1. Зареєструвати матеріали в НДІ (.txt)
+        <button class="btn" id="btnExportNdi" style="background-color: #D97706; color: #fff; font-size: 15px; padding: 14px 20px; cursor: pointer; border: none; border-radius: 8px;">
+          📥 1. Для НДІ (.txt)
         </button>
         <!-- Step 2: Native AVK-5 Alt+F3 (.txt) -->
-        <button class="btn btn-primary" id="btnExportAltF3" style="background-color: #10B981; font-size: 15px; padding: 14px 22px; cursor: pointer; border: none; border-radius: 8px;">
-          📥 2. Внести в кошторис (.txt через Alt+F3)
+        <button class="btn" id="btnExportAltF3" style="background-color: #10B981; color: #fff; font-size: 15px; padding: 14px 20px; cursor: pointer; border: none; border-radius: 8px;">
+          📥 2. Для кошторису (Alt+F3 .txt)
         </button>
         <!-- Alternative Option: Rasch_290 .xls -->
         <button class="btn btn-secondary" id="btnExportRasch" style="padding: 14px 18px;">
@@ -584,6 +588,14 @@
     if (k && !NSI_MAP[k]) NSI_MAP[k] = item.c;
   });
   const NSI_LIST = NSI_DATA.map(item => item.c);
+
+  // Download both files with one click
+  document.getElementById('btnExportBoth').addEventListener('click', () => {
+    document.getElementById('btnExportNdi').click();
+    setTimeout(() => {
+      document.getElementById('btnExportAltF3').click();
+    }, 500);
+  });
 
   // 1. Export ALL materials for NDI registration
   document.getElementById('btnExportNdi').addEventListener('click', () => {
