@@ -181,16 +181,62 @@ def read_file(filepath: str) -> List[Dict[str, Any]]:
     else:
         raise ValueError(f"Непідтримуваний формат файлу: {ext}. Використовуйте .xlsx або .csv")
 
-def export_to_avk_txt(items: List[Dict[str, Any]], output_path: str, cipher_prefix: str = "С1-ПР1-"):
+def export_to_avk_txt(items: List[Dict[str, Any]], output_path: str, cipher_prefix: str = "С1-ПР1-", nsi_file: str = None):
     """Exports to AVK-5 Alt+F3 native text import format (CP1251)."""
+    import json
+    nsi_list = []
+    nsi_map = {}
+    
+    # Try loading NSI data
+    if nsi_file is None:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        cand = os.path.join(base_dir, "nsi_data.json")
+        if os.path.exists(cand):
+            nsi_file = cand
+            
+    if nsi_file and os.path.exists(nsi_file):
+        try:
+            with open(nsi_file, 'r', encoding='utf-8') as f:
+                raw_nsi = json.load(f)
+            nsi_list = [it['c'] for it in raw_nsi]
+            for it in raw_nsi:
+                k = it.get('n', '').lower().strip()
+                if k and k not in nsi_map:
+                    nsi_map[k] = it['c']
+        except Exception:
+            pass
+
+    assigned = set()
+    matched = []
+    unmatched = []
+
+    for idx, item in enumerate(items):
+        k = item['name'].lower().strip()
+        if k in nsi_map and nsi_map[k] not in assigned:
+            cip = nsi_map[k]
+            assigned.add(cip)
+            matched.append((idx, cip, item))
+        else:
+            unmatched.append((idx, item))
+
+    avail = [c for c in nsi_list if c not in assigned]
+    for idx, item in unmatched:
+        if avail:
+            cip = avail.pop(0)
+            assigned.add(cip)
+        else:
+            cip = f"{cipher_prefix}{idx + 1}" if cipher_prefix else str(idx + 1)
+        matched.append((idx, cip, item))
+
+    matched.sort(key=lambda x: x[0])
+
     lines = [
         ":Л*",
         ":К`Локальний кошторис*"
     ]
-    for idx, item in enumerate(items, 1):
-        cipher = f"{cipher_prefix}{idx}" if cipher_prefix else str(idx)
+    for _, cipher, item in matched:
         qty_str = str(item['qty']).replace('.', ',')
-        price_str = str(item['price']).replace('.', ',') if item['price'] > 0 else ""
+        price_str = f"{item['price']:.2f}".replace('.', ',') if item['price'] > 0 else ""
         lines.append(f":П`{cipher}`{qty_str}``{price_str}````*")
         
     with open(output_path, 'w', encoding='cp1251', errors='replace', newline='\r\n') as f:
@@ -244,8 +290,12 @@ def export_for_rasch(items: List[Dict[str, Any]], output_path: str, cipher_prefi
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         inp = sys.argv[1]
-        out_file = sys.argv[2] if len(sys.argv) > 2 else "АВК_Матеріали_ShiftM.xlsx"
+        out_file = sys.argv[2] if len(sys.argv) > 2 else "АВК_Матеріали_AltF3.txt"
         items = read_file(inp)
         print(f"Зчитано {len(items)} позицій.")
-        export_to_avk_excel(items, out_file, include_headers=False)
-        print(f"Збережено без заголовків у {out_file}!")
+        if out_file.endswith('.txt'):
+            export_to_avk_txt(items, out_file)
+            print(f"Збережено для АВК-5 Alt+F3 у {out_file}!")
+        else:
+            export_to_avk_excel(items, out_file, include_headers=False)
+            print(f"Збережено у {out_file}!")
