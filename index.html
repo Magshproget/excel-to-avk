@@ -350,37 +350,26 @@
 
     <div class="btn-group">
       <div class="btn-row">
-        <!-- Main Option 1: Native TXT for Alt+F3 -->
-        <button class="btn btn-primary" id="btnExportAvkTxt">
-          📥 1. Вбудований імпорт АВК-5 (.txt для Alt+F3)
+        <!-- Main Recommended Option: Native AVK-5 IBD (.bds) -->
+        <button class="btn btn-primary" id="btnExportIbd" style="background-color: #2563EB; font-size: 15px; padding: 14px 24px;">
+          ⭐ 1. Завантажити файл ІБД (.bds) — ПРЯМИЙ ІМПОРТ В АВК-5
         </button>
-        <!-- Option 2: Native XLS for Shift+M -->
-        <button class="btn btn-secondary" id="btnExportAvkXls">
-          📥 2. Вбудований імпорт АВК-5 (.xls для Shift+M)
-        </button>
-        <!-- Option 3: Fixed file for Rasch_290 -->
-        <button class="btn btn-accent" id="btnExportRasch" style="background-color: #475569;">
-          📥 3. Для програми Rasch_290 (.xls)
+        <!-- Alternative Option 2: Rasch_290 .xls -->
+        <button class="btn btn-secondary" id="btnExportRasch">
+          📥 2. Для програми Rasch_290 (.xls)
         </button>
       </div>
     </div>
   </div>
 
   <div class="guide-box">
-    <h4>📋 Як завантажити підготовлений файл в АВК-5:</h4>
+    <h4>📋 Як імпортувати файл ІБД (.bds) в АВК-5:</h4>
     <ol>
-      <li><b>Спосіб 1 (Рекомендований: вбудований імпорт .txt через Alt+F3):</b>
-        <br>Натисніть зелену кнопку <b>«1. Вбудований імпорт АВК-5 (.txt для Alt+F3)»</b>.
-        <br>В АВК-5 у вікні Локального кошторису натисніть <b>«Створення» ➔ «Внесення групи рядків із текстового файлу (Alt+F3)»</b> і виберіть збережений файл. <i>(Створено точно за форматом експорту вашої версії АВК з міткою <code>:Л*</code>)</i>.
-      </li>
-      <li><b>Спосіб 2 (Вбудований імпорт .xls через Shift+M):</b>
-        <br>Натисніть синю кнопку <b>«2. Вбудований імпорт АВК-5 (.xls для Shift+M)»</b>.
-        <br>В АВК-5 виберіть <b>«Створення» ➔ «Внесення групи рядків із файлу у форматі XLS (Shift+M)»</b>.
-      </li>
-      <li><b>Спосіб 3 (Через зовнішню програму Rasch_290):</b>
-        <br>Натисніть сіру кнопку <b>«3. Для програми Rasch_290 (.xls)»</b>.
-        <br>У програмі Rasch_290 натисніть <b>«Утилиты» ➔ «ИБД..» ➔ «материалов из прайса (Ctrl+D)»</b>. Файл тепер у форматі <code>.xls</code> (який вона відразу бачить) і містить точну назву колонки <code>Количество</code>.
-      </li>
+      <li>Натисніть велику синю кнопку <b>«⭐ 1. Завантажити файл ІБД (.bds)»</b> і збережіть файл <code>PRICE.bds</code>.</li>
+      <li>В АВК-5 перейдіть у головне вікно — <b>«Список будов»</b>.</li>
+      <li>У верхньому меню виберіть: <b>«Уведення-виведення» ➔ «Уведення ІБД»</b> (або <i>«Уведення будови з ІБД»</i>) та виберіть цей <code>PRICE.bds</code>.</li>
+      <li>В АВК-5 з'явиться готова будова <b>«МАТЕРІАЛИ З ПРАЙСІВ»</b>, у якій <b>усі позиції вже створені</b> (з правильними назвами, одиницями, кількістю і ціною!).</li>
+      <li><i>(За потреби скопіювати їх у свій кошторис):</i> відкрийте ваш робочий кошторис і натисніть меню <b>«Сервіс» ➔ «Копіювання позицій з локальних кошторисів інших будов (Shift+C)»</b>.</li>
     </ol>
   </div>
 </div>
@@ -584,63 +573,77 @@
     return bytes;
   }
 
-  // 1. Export for AVK Alt+F3: Native .txt (CP1251)
-  document.getElementById('btnExportAvkTxt').addEventListener('click', () => {
+  // 1. Export genuine IBD (.bds) directly for AVK-5 "Список будов" -> "Уведення ІБД"
+  document.getElementById('btnExportIbd').addEventListener('click', () => {
     if (!parsedItems.length) return;
-    const prefix = cipherPrefixInput.value.trim();
+    const prefix = cipherPrefixInput.value.trim() || 'С1-ПР1-';
 
-    let txtContent = ':Л*\r\n:К`Локальний кошторис*\r\n';
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yy = String(now.getFullYear()).slice(-2);
+    const dateStr = `${dd}.${mm}.${yy}`;
+
+    const lines = [
+      `0\`ИБД_2\`FragToAvk5 V-3.1.904\`${dateStr}\`1*`,
+      'S1`3*',
+      'S2`МАТЕРІАЛИ З ПРАЙСІВ``МАТ-ПРАЙС`0`.                             ``````5,48`5,04`0,3903`0,058`8,92`12,34`2,51`1,94`117,95`1,5`2,79`6,46`5,18`30*',
+      'S14*',
+      'S3*',
+      'S4*',
+      'S5*'
+    ];
+
+    for (let i = 1; i <= 17; i++) {
+      lines.push(`G${i}\`*`);
+    }
+
+    lines.push('S6*');
+    lines.push('Л9.2`20`28,29`36,57`41,33`48,76`56,22`63,64`7,73`7,63`7,53`1,58`7,2*');
+    lines.push('S7*');
+
     parsedItems.forEach((item, idx) => {
-      const cipher = prefix ? `${prefix}${idx + 1}` : String(idx + 1);
-      const qtyStr = String(item.qty).replace('.', ',');
-      const priceStr = item.price > 0 ? String(item.price).replace('.', ',') : '';
-      txtContent += `:П\`${cipher}\`${qtyStr}\`\`${priceStr}\`\`\`\`*\r\n`;
+      const cipher = `${prefix}${idx + 1}`;
+      lines.push(`${cipher}\`1\`Л19.2\`${item.name}\`${item.unit}\`\`*`);
     });
 
-    const bytes = encodeCP1251(txtContent);
-    const blob = new Blob([bytes], { type: 'text/plain;charset=windows-1251' });
+    lines.push('S8*');
+    parsedItems.forEach((item, idx) => {
+      const cipher = `${prefix}${idx + 1}`;
+      const priceStr = String(item.price).replace('.', ',');
+      lines.push(`MT\`${cipher}\`\`\`0\`1\`${dateStr}\`\`12\`Т1=${priceStr}\`0\`${priceStr}#0\`0*`);
+    });
+
+    lines.push('S9*');
+    lines.push('OS1`2`1`2-1`МАТЕРІАЛИ`0``*');
+    lines.push('OS2*');
+    lines.push('S10*');
+    lines.push('LS1`2`1`1`2-1-1`матеріали`````*');
+    lines.push('LS2*');
+    lines.push('Н18=38,985`Н21=1,039*');
+    lines.push('LS3*');
+    lines.push('R`Матеріали*');
+
+    parsedItems.forEach((item, idx) => {
+      const cipher = `${prefix}${idx + 1}`;
+      const qtyStr = String(item.qty).replace('.', ',');
+      lines.push(`${idx + 1}\`${cipher}\`${qtyStr}\`Т7=\`ТР=1#7*`);
+    });
+
+    const fullText = lines.join('\r\n') + '\r\n';
+    const bytes = encodeCP1251(fullText);
+    const blob = new Blob([bytes], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'АВК_Матеріали_AltF3.txt';
+    a.download = 'PRICE.bds';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
 
-  // 2. Export for AVK Shift+M: Native .xls (BIFF8) with :Л marker
-  document.getElementById('btnExportAvkXls').addEventListener('click', () => {
-    if (!parsedItems.length) return;
-    const prefix = cipherPrefixInput.value.trim();
-
-    const data = [
-      [":Л"],
-      [":К", "Локальний кошторис"]
-    ];
-
-    parsedItems.forEach((item, idx) => {
-      const cipher = prefix ? `${prefix}${idx + 1}` : String(idx + 1);
-      data.push([
-        ":П",
-        cipher,
-        item.qty,
-        "",
-        item.price,
-        "",
-        "",
-        ""
-      ]);
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 12 }, { wch: 6 }, { wch: 12 }, { wch: 6 }, { wch: 6 }, { wch: 6 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Локальний кошторис");
-    XLSX.writeFile(wb, "АВК_Матеріали_ShiftM.xls", { bookType: 'biff8' });
-  });
-
-  // 3. Export for Rasch_290 with exact Russian headers and BIFF8 .xls
+  // 2. Export for Rasch_290 with exact Russian headers and BIFF8 .xls
   document.getElementById('btnExportRasch').addEventListener('click', () => {
     if (!parsedItems.length) return;
     const prefix = cipherPrefixInput.value.trim();
