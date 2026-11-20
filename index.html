@@ -639,7 +639,7 @@
       const cipher = `${prefix}${idx + 1}`;
       const cleanName = it.name.replace(/`/g, '');
       const cleanUnit = it.unit.replace(/`/g, '');
-      lines.push(`5\`${cipher}\`1\`Л19.2\`${cleanName}\`${cleanUnit}\`\`\`\`\`${dtStr}*`);
+      lines.push(`5\`${cipher}\`1\`Л19.2\`${cleanName}\`${cleanUnit}\`\`\`\`${dtStr}*`);
     });
 
     const fullText = lines.join('\r\n') + '\r\n';
